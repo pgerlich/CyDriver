@@ -151,7 +151,7 @@ def read_labels(directory, images):
   index = 0
   for image in images:
     label = numpy.zeros(3)
-    label[index % 3] = (index % 3) + 1
+    label[index % 3] = 1
     index = index + 1
     labels.append(label)
 
