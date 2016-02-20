@@ -117,7 +117,6 @@ for i in range(20):
     sess.run(train_step, feed_dict=feed)
 
 
-
 print("test accuracy %g"%accuracy.eval(feed_dict={
     x: data.test.images, y_: data.test.labels, keep_prob: 1.0}))
 

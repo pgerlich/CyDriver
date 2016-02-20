@@ -96,11 +96,11 @@ def getch():
 import socket
 import sys
 
-# Create a TCP/IP socket
+# # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 #Connect the socket to the port where the server is listening
-server_address = ('localhost', 10000)
+server_address = ('192.168.0.1', 10000)
 print >>sys.stderr, 'connecting to %s port %s' % server_address
 sock.connect(server_address)
 
@@ -128,6 +128,11 @@ def convertModeToVal(mode):
 	if mode == 2:
 		return "RIGHT"
 
+def convertVectorToLabel(vec):
+	vec = vec.tolist()
+	maxVal = max(vec)
+	return vec.index(maxVal)
+
 
 def labelVideoInput():
 	print "Searching for stream"
@@ -138,46 +143,51 @@ def labelVideoInput():
 	stream=urllib.urlopen('http://192.168.0.1:8080/?action=stream')
 	bytes=''
 
+	print "Connected to stream"
+
 	while(True):
 		#Load from stream
-		bytes+=stream.read(8192)
+		bytes+=stream.read(22500)
 		a = bytes.find('\xff\xd8')
 		b = bytes.find('\xff\xd9')
+
 		if a!=-1 and b!=-1:
-		    jpg = bytes[a:b+2]
-		    bytes= bytes[b+2:]
+			jpg = bytes[a:b+2]
+			bytes= bytes[b+2:]
 
-		i = cv2.imdecode(numpy.fromstring(jpg, dtype=numpy.uint8),cv2.COLOR_BGR2GRAY)
+			i = cv2.imdecode(numpy.fromstring(jpg, dtype=numpy.uint8),cv2.COLOR_BGR2GRAY)
 
-		# Our operations on the frame come here
-		gray = cv2.cvtColor(i, cv2.COLOR_BGR2GRAY)
-		img = cv2.resize(gray, (100, 100))
-		img = img.reshape(img.shape[0] * img.shape[1])
+			# Our operations on the frame come here
+			gray = cv2.cvtColor(i, cv2.COLOR_BGR2GRAY)
+			imgBeforeFlatten = cv2.resize(gray, (100, 100))
+			img = imgBeforeFlatten.reshape(1, imgBeforeFlatten.shape[0] * imgBeforeFlatten.shape[1])
 
-		#Classify image with NN
-		sess.run(y_conv, )
-		label = 0 #TODO
+			#Classify image with NN
+			feed_dict = {x: img, keep_prob: 1.0}
+			classification = sess.run(y, feed_dict)
 
-		#Populate at first, treat like queue there after
-		if len(last38) <= 37:
-			last38.append(label)
-		else:
-			last38[labelIndex % 38] = label #Fill up last38 in FIFO order
+			#print classification
+			label = convertVectorToLabel(classification)
 
-		labelIndex = labelIndex + 1
+			#Populate at first, treat like queue there after
+			if len(last38) <= 37:
+				last38.append(label)
+			else:
+				last38[labelIndex % 38] = label #Fill up last38 in FIFO order
 
-		currentMode = max(set(last38), key=last38.count) #Most occurin in last 38 samples
+			labelIndex = labelIndex + 1
 
-		print currentMode
+			currentMode = max(set(last38), key=last38.count) #Most occurin in last 38 samples
 
-		if len(last38) == 38:
-			sock.sendall(convertModeToVal(currentMode))
+			if len(last38) >= 38:
+				print currentMode
+				sock.sendall(convertModeToVal(currentMode))
 
-		# Display the resulting frame
-		cv2.imshow('frame', img)
+			# Display the resulting frame
+			cv2.imshow('frame', imgBeforeFlatten)
 
-		if cv2.waitKey(1) & 0xFF == ord('q'):
-			break
+			if cv2.waitKey(1) & 0xFF == ord('q'):
+				break
 
 	# When everything done, release the capture
 	cap.release()
