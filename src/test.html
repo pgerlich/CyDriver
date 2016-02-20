@@ -42,25 +42,75 @@
 
 <body onload="main()">
 <div style="text-align:center;">
-    <video autoplay></video>
+<!--    <div class="select">
+        <label for="audioSource">Audio input source: </label><select id="audioSource"></select>
+    </div>
+
+    <div class="select">
+        <label for="audioOutput">Audio output destination: </label><select id="audioOutput"></select>
+    </div>
+
+    <div class="select">
+        <label for="videoSource">Video source: </label><select id="videoSource"></select>
+    </div>
+    <video autoplay></video>-->
     <script>
+        // Opera 8.0+
+        var isOpera = (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+        // Firefox 1.0+
+        var isFirefox = typeof InstallTrigger !== 'undefined';
+        // At least Safari 3+: "[object HTMLElementConstructor]"
+        var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+        // Internet Explorer 6-11
+        var isIE = /*@cc_on!@*/false || !!document.documentMode;
+        // Edge 20+
+        var isEdge = !isIE && !!window.StyleMedia;
+        // Chrome 1+
+        var isChrome = !!window.chrome && !!window.chrome.webstore;
+        // Blink engine detection
+        var isBlink = (isChrome || isOpera) && !!window.CSS;
 
+        if(isChrome){
 
-        var p = navigator.mediaDevices.getUserMedia({audio: true, video: true});
+            'use strict';
 
-        p.then(function (mediaStream) {
-            console.log(mediaStream);
+    // Put variables in global scope to make them available to the browser console.
             var video = document.querySelector('video');
-            video.src = window.URL.createObjectURL(mediaStream);
-            video.onloadedmetadata = function (e) {
-                // Do something with the video here.
-                console.log('success');
+            var constraints = window.constraints = {
+                audio: false,
+                video: true
             };
-        });
 
-        p.catch(function (err) {
-            console.log(err.name);
-        }); // always check for errors at the end.
+            var p = navigator.webkitGetUserMedia(constraints,function (mediaStream) {
+                console.log(mediaStream);
+                var video = document.querySelector('video');
+                video.src = window.URL.createObjectURL(mediaStream);
+                video.onloadedmetadata = function (e) {
+                    // Do something with the video here.
+                    console.log('success');
+                    }
+                }, function (err) {
+                    console.log(err.name);
+                });
+            console.log(p);
+
+        }else {
+            var p = navigator.mediaDevices.getUserMedia({audio: true, video: true});
+
+            p.then(function (mediaStream) {
+                console.log(mediaStream);
+                var video = document.querySelector('video');
+                video.src = window.URL.createObjectURL(mediaStream);
+                video.onloadedmetadata = function (e) {
+                    // Do something with the video here.
+                    console.log('success');
+                };
+            });
+
+            p.catch(function (err) {
+                console.log(err.name);
+            }); // always check for errors at the end.
+        }
 
     </script>
     <div class="table-responsive">
