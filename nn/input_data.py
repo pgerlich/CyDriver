@@ -22,8 +22,7 @@ class DataSet(object):
 
   def __init__(self, images, labels, fake_data=False, one_hot=False,
                dtype=tf.float32):
-
-    #Reshape images
+    #Reshape images/labels
     images = images.reshape(images.shape[0], images.shape[1] * images.shape[2])
     labels = labels.reshape(labels.shape[0], labels.shape[1])
 
@@ -94,8 +93,8 @@ def read_data_sets(train_dir, dtype=tf.float32):
   validation_labels = np.asarray(all_labels[TRAIN_SIZE + TEST_SIZE:]) #Grab validation images
 
   data_sets.train = DataSet(train_images, train_labels, dtype=dtype)
-  data_sets.validation = DataSet(validation_images, validation_labels, dtype=dtype)
   data_sets.test = DataSet(test_images, test_labels, dtype=dtype)
+  data_sets.validation = DataSet(validation_images, validation_labels, dtype=dtype)
   data_sets._num_examples = len(all_images)
 
   return data_sets
@@ -111,6 +110,41 @@ def read_images(directory):
 
   return images
 
+#Real labels
+# def read_labels(directory, images):
+#   labels = []
+
+#   labelFile = open(os.path.join('1455953378.16', 'labels.txt')) 
+
+#   lastTime = 0
+#   lastLabel = 0
+
+#   index = 0
+#   for line in labelFile:
+#     labelSplit = line.split(' ') #Label : Timestamp
+#     labelVal = labelSplit[0] #Current label value
+#     currentTime = labelSplit[1] #time of operation
+
+#     if lastTime != 0:
+#       timeDif = float(currentTime) - float(lastTime)
+#       labelTimeMultiplier = timeDif * 25
+#       print labelTimeMultiplier #Checking number of frames to apply this label to
+#       print lastLabel
+      
+#       while index <= labelTimeMultiplier:
+#         label = numpy.zeros(3) #initialize array of 3 zeros
+#         label[int(lastLabel) - 1] = lastLabel #Create one-hot vector for val
+#         labels.append(lastLabel) #Append to labels
+#         index = index + 1 
+
+#       index = 0
+
+#     lastTime = currentTime
+#     lastLabel = labelVal
+
+#   return labels
+
+#Dummy labels
 def read_labels(directory, images):
   labels = []
 
@@ -122,7 +156,5 @@ def read_labels(directory, images):
     labels.append(label)
 
   return labels
-
-
 
 

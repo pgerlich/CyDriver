@@ -29,6 +29,7 @@ def main():
 
 def saveVideoFrames(videoFile):
 	cap = cv2.VideoCapture(videoFile)
+	fgbg = cv2.BackgroundSubtractorMOG()
 
 	directory = str(time.time())
 
@@ -45,6 +46,7 @@ def saveVideoFrames(videoFile):
 
 		# Our operations on the frame come here
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+		#grayMasked = fgbg.apply(gray)
 		img = cv2.resize(gray, (100, 100))
 
 		relativePath = directory

@@ -1,11 +1,12 @@
 print "Loading Vehicle data"
 
 import input_data
-data = input_data.read_data_sets('1455953378.16')
+data = input_data.read_data_sets('1455964924.93')
 
 print "Configuring net"
 
 import tensorflow as tf
+import os.path
 sess = tf.InteractiveSession()
 
 #Initialize weights
@@ -35,9 +36,24 @@ b = tf.Variable(tf.zeros([3])) #Biases - change to 4
 
 sess.run(tf.initialize_all_variables())
 
-y = tf.nn.softmax(tf.matmul(x,W) + b) #Softmax label for prediction
+#Restoring models
+if os.path.isfile("model.ckpt"):
+  saver = tf.train.Saver()
+  saver.restore(sess, "model.ckpt")
+  print("Model restored.")
 
-cross_entropy = -tf.reduce_sum(y_*tf.log(y))
+#Add label to graph nodes
+with tf.name_scope("Wx_b") as scope:
+  y = tf.nn.softmax(tf.matmul(x,W) + b) #Softmax label for prediction
+
+# Add summary ops to collect data
+w_hist = tf.histogram_summary("weights", W)
+b_hist = tf.histogram_summary("biases", b)
+y_hist = tf.histogram_summary("y", y)
+
+with tf.name_scope("xent") as scope:
+  cross_entropy = -tf.reduce_sum(y_*tf.log(y))
+  ce_summ = tf.scalar_summary("cross entropy", cross_entropy)
 
 print "Setting up Convolutional layers"
 
@@ -76,21 +92,50 @@ b_fc2 = bias_variable([3])
 y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
 cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv + 1e-9))
-train_step = tf.train.AdamOptimizer(1e-2).minimize(cross_entropy)
-correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+with tf.name_scope("train") as scope:
+  train_step = tf.train.AdamOptimizer(1e-2).minimize(cross_entropy)
+
+with tf.name_scope("test") as scope:
+  correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
+  accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+  accuracy_summary = tf.scalar_summary("accuracy", accuracy)
+
+merged = tf.merge_all_summaries()
+writer = tf.train.SummaryWriter("/tmp/cydriver_logs", sess.graph_def)
+
 sess.run(tf.initialize_all_variables())
 
 print "Training network"
 
-#Train network
-for i in range(20000):
-  batch = data.train.next_batch(50)
-  if i%10 == 0:
-    train_accuracy = accuracy.eval(feed_dict={
-        x:batch[0], y_: batch[1], keep_prob: 1.0})
-    print("step %d, training accuracy %g"%(i, train_accuracy))
-  train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+# #Train network
+# for i in range(20):
+#   batch = data.train.next_batch(50)
+#   if i%10 == 0:
+#     train_accuracy = accuracy.eval(feed_dict={
+#         x:batch[0], y_: batch[1], keep_prob: 1.0})
+#     print("step %d, training accuracy %g"%(i, train_accuracy))
+
+#   train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+
+for i in range(20):
+  if i % 10 == 0:  # Record summary data, and the accuracy
+    feed = {x: data.test.images, y_: data.test.labels, keep_prob: 1.0}
+    result = sess.run([merged, accuracy], feed_dict=feed)
+    summary_str = result[0]
+    acc = result[1]
+    writer.add_summary(summary_str, i)
+    print("Accuracy at step %s: %s" % (i, acc))
+  else:
+    batch_xs, batch_ys = data.train.next_batch(100)
+    feed = {x: batch_xs, y_: batch_ys, keep_prob: 0.5}
+    sess.run(train_step, feed_dict=feed)
 
 print("test accuracy %g"%accuracy.eval(feed_dict={
     x: data.test.images, y_: data.test.labels, keep_prob: 1.0}))
+
+
+saver = tf.train.Saver()
+save_path = saver.save(sess, "model.ckpt")
+print("Model saved in file: %s" % save_path)
+
