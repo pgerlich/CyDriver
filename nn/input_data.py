@@ -108,7 +108,6 @@ def read_images(directory):
   for image_name in imgDir:
     image = cv2.imread(os.path.join(directory, image_name), cv2.IMREAD_GRAYSCALE)
     images.append(image)
-    print "Appended"
 
   return images
 
@@ -119,7 +118,6 @@ def read_labels(directory, images):
   for image in images:
     label = numpy.zeros(3)
     label[index % 3] = (index % 3) + 1
-    print "Assigned label", (index % 3) + 1
     index = index + 1
     labels.append(label)
 
