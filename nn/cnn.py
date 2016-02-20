@@ -1,7 +1,7 @@
 print "Loading Vehicle data"
 
 import input_data
-data = input_data.read_data_sets('1455964924.93')
+data = input_data.read_data_sets('1455979788.06')
 
 print "Configuring net"
 
@@ -33,14 +33,6 @@ y_ = tf.placeholder(tf.float32, shape=[None, 3]) #One-hot vectors - TODO: change
 
 W = tf.Variable(tf.zeros([10000,3])) #Weights - change to 4
 b = tf.Variable(tf.zeros([3])) #Biases - change to 4
-
-sess.run(tf.initialize_all_variables())
-
-#Restoring models
-if os.path.isfile("model.ckpt"):
-  saver = tf.train.Saver()
-  saver.restore(sess, "model.ckpt")
-  print("Model restored.")
 
 #Add label to graph nodes
 with tf.name_scope("Wx_b") as scope:
@@ -106,17 +98,9 @@ writer = tf.train.SummaryWriter("/tmp/cydriver_logs", sess.graph_def)
 
 sess.run(tf.initialize_all_variables())
 
+saver = tf.train.Saver()
+
 print "Training network"
-
-# #Train network
-# for i in range(20):
-#   batch = data.train.next_batch(50)
-#   if i%10 == 0:
-#     train_accuracy = accuracy.eval(feed_dict={
-#         x:batch[0], y_: batch[1], keep_prob: 1.0})
-#     print("step %d, training accuracy %g"%(i, train_accuracy))
-
-#   train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
 for i in range(20):
   if i % 10 == 0:  # Record summary data, and the accuracy
@@ -125,17 +109,20 @@ for i in range(20):
     summary_str = result[0]
     acc = result[1]
     writer.add_summary(summary_str, i)
+    saver.save(sess, 'model.ckpt', global_step= i + 1)
     print("Accuracy at step %s: %s" % (i, acc))
   else:
     batch_xs, batch_ys = data.train.next_batch(100)
     feed = {x: batch_xs, y_: batch_ys, keep_prob: 0.5}
     sess.run(train_step, feed_dict=feed)
 
+
+
 print("test accuracy %g"%accuracy.eval(feed_dict={
     x: data.test.images, y_: data.test.labels, keep_prob: 1.0}))
 
 
-saver = tf.train.Saver()
+
 save_path = saver.save(sess, "model.ckpt")
 print("Model saved in file: %s" % save_path)
 
