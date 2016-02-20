@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE = edge">
+    <meta name="viewport" content="width = device-width,
+         initial-scale = 1">
+
+    <title>CyDriver</title>
+	
+
+</head>
+
+<body>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+var socket = io('http://192.168.0.1');
+
+socket.on('ready', function () {
+	alert('ready');
+});
+
+window.activeKeys = {};
+
+function notOpposite(keyCode) { //user shouldn't be able to go left and right at the same time, etc
+	return (
+		(keyCode == 87 && !window.activeKeys[83]) ||
+		(keyCode == 83 && !window.activeKeys[87]) ||
+		(keyCode == 65 && !window.activeKeys[68]) ||
+		(keyCode == 68 && !window.activeKeys[65])
+	);
+}
+
+document.body.onkeydown = function (e) {
+	var keyCode = e.keyCode;
+	e.preventDefault();
+	if (keyCode == 87 || keyCode == 65 || keyCode == 83 || keyCode == 68) { //key is WASD
+		if (!window.activeKeys[keyCode]) { //key is inactive
+			if (notOpposite(keyCode)) {
+				window.activeKeys[keyCode] = 1;
+				socket.emit('keydown', {key: keyCode});
+			}
+		}
+	}	
+}
+
+document.body.onkeyup = function (e) {
+	var keyCode = e.keyCode;
+	e.preventDefault();
+	if (keyCode == 87 || keyCode == 65 || keyCode == 83 || keyCode == 68) {
+		if (window.activeKeys[keyCode]) {
+			delete window.activeKeys[keyCode];
+			socket.emit('keyup', {key: keyCode});
+		}
+	}		
+}
+
+</script>
+
+</body>
+</html>
