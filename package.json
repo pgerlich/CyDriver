@@ -1,0 +1,26 @@
+{
+  "name": "cydriver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pgerlich/CyDriver.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pgerlich/CyDriver/issues"
+  },
+  "homepage": "https://github.com/pgerlich/CyDriver#readme",
+  "dependencies": {
+    "express": "^4.13.4",
+    "jade": "^1.11.0",
+    "path": "^0.12.7",
+    "vid-streamer": "^1.0.0",
+    "webrtc-adapter": "^1.0.1"
+  }
+}
