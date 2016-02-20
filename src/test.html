@@ -52,9 +52,17 @@
 
     <div class="select">
         <label for="videoSource">Video source: </label><select id="videoSource"></select>
-    </div>
-    <video autoplay></video>-->
-    <script>
+    </div>-->
+    <video autoplay></video>
+    <canvas id="videoCanvas" width="640" height="480"></canvas>
+    <script type="text/javascript" src="jsmpg.js"></script>
+    <script type="text/javascript">
+        // Setup the WebSocket connection and start the player
+        var client = new WebSocket( 'ws://127.0.0.1:8084/' );
+        var canvas = document.getElementById('videoCanvas');
+        var player = new jsmpeg(client, {canvas:canvas});
+    </script>
+    <!--<script>
         // Opera 8.0+
         var isOpera = (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
         // Firefox 1.0+
@@ -128,7 +136,7 @@
             console.log("DOWN");
         }
 
-    </script>
+    </script>-->
     <div class="table-responsive">
         <table class="table">
             <div style="margin: 0 auto;">
