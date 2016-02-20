@@ -112,6 +112,22 @@
             }); // always check for errors at the end.
         }
 
+        function moveUp(){
+            console.log("UP");
+        }
+        function moveLeft(){
+            console.log("LEFT");
+        }
+        function moveStop(){
+            console.log("STOP");
+        }
+        function moveRight(){
+            console.log("RIGHT");
+        }
+        function moveDown(){
+            console.log("DOWN");
+        }
+
     </script>
     <div class="table-responsive">
         <table class="table">
@@ -120,7 +136,7 @@
                 <tr>
                     <td></td>
                     <td>
-                        <button type="button" class="btn btn-primary btn-lg">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="moveUp()">
                             &nbsp;&nbsp;UP&nbsp;&nbsp;&nbsp;</button>
                     </td>
                     <td></td>
@@ -128,16 +144,16 @@
 
                 <tr>
                     <td>
-                        <button type="button" class="btn btn-primary btn-lg">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="moveLeft()">
                             LEFT
                         </button>
                     </td>
                     <td>
-                        <button type="button" class="btn btn-primary btn-lg">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="moveStop()">
                             STOP&nbsp;</button>
                     </td>
                     <td>
-                        <button type="button" class="btn btn-primary btn-lg">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="moveRight()">
                             RIGHT
                         </button>
                     </td>
@@ -146,7 +162,7 @@
                 <tr>
                     <td></td>
                     <td>
-                        <button type="button" class="btn btn-primary btn-lg">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="moveDown()">
                             DOWN
                         </button>
                     </td>
