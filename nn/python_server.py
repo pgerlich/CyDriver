@@ -1,18 +1,13 @@
+import socket
 import RPi.GPIO as GPIO
 from time import sleep
+import time
 import sys, tty, termios
 import picamera
 import pygame
-import socket
-import sys
 
 pygame.init()
 
-# #cam = picamera.PiCamera()
-# #cam.vflip = True
-picNum = 0
-
-filming = False
 front = False
 back = False
 left = False
@@ -40,34 +35,36 @@ GPIO.setup(Motor2E,GPIO.OUT)
 Enable2 = GPIO.PWM(Motor2E, 100)
 Enable2.start(0)
 
-print "ready to drive"
-def forward()       :
+
+def forward():
     print "Going forwards"
     GPIO.output(Motor1A,GPIO.HIGH)
     GPIO.output(Motor1B,GPIO.LOW)
-    Enable1.ChangeDutyCycle(100)    
+    Enable1.ChangeDutyCycle(70) 
 
 def backwards():
     print "Going backwards"
     GPIO.output(Motor1A,GPIO.LOW)
     GPIO.output(Motor1B,GPIO.HIGH)
-    Enable1.ChangeDutyCycle(100)
+    Enable1.ChangeDutyCycle(60)
 
 def straight():
-    Enable1.ChangeDutyCycle(100)
-    Enable2.ChangeDutyCycle(100)    
+    GPIO.output(Motor2A, GPIO.LOW)
+    GPIO.output(Motor2B, GPIO.LOW)
+    Enable1.ChangeDutyCycle(60)
+    Enable2.ChangeDutyCycle(0)  
     
 def rightTurn():
     print "going right"
     GPIO.output(Motor2A, GPIO.HIGH)
     GPIO.output(Motor2B, GPIO.LOW)
-    Enable1.ChangeDutyCycle(100)
+    Enable2.ChangeDutyCycle(100)
     
 def leftTurn():
     print "going left"  
     GPIO.output(Motor2A, GPIO.LOW)
     GPIO.output(Motor2B, GPIO.HIGH)
-    Enable1.ChangeDutyCycle(100)
+    Enable2.ChangeDutyCycle(100)
     
 def halt():
     print "stopping"
@@ -86,8 +83,7 @@ def halt():
 def straighten():
     if (front or back):
         straight()  
-    
-
+   
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -129,6 +125,9 @@ while True:
                 left = False
                 rightTurn()
             	print "Moving Right"
+            elif "STOP" in data:
+                halt()
+                print "STOP"
 
 
             if not data:

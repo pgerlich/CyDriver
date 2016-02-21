@@ -31,12 +31,12 @@ def saveVideoFrames(videoFile):
 	cap = cv2.VideoCapture(videoFile)
 	fgbg = cv2.BackgroundSubtractorMOG()
 
-	directory = str(time.time())
+	directory = "randomMovement" #str(time.time())
 
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
-	frameIndex = 0
+	frameIndex = 6630
 
 	startTime = time.time()
 
@@ -46,11 +46,10 @@ def saveVideoFrames(videoFile):
 
 		# Our operations on the frame come here
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		#grayMasked = fgbg.apply(gray)
-		img = cv2.resize(gray, (100, 100))
+		img = cv2.resize(gray, (32, 32))
 
 		relativePath = directory
-		framePath = 'frame' + str(frameIndex) + '.png'
+		framePath = 'frame' + str(frameIndex) + '.jpg'
 		fullPath = os.path.join(relativePath, framePath)
 
 		cv2.imwrite(fullPath, img)

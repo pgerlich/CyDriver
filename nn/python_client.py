@@ -1,7 +1,9 @@
 import tensorflow as tf
 import os.path
 import urllib
+import time
 import sys, tty, termios
+from socket import error as socket_error
 import numpy 
 import cv2
 
@@ -29,16 +31,8 @@ def max_pool_2x2(x):
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 #Our image vectors
-x = tf.placeholder(tf.float32, shape=[None, 10000]) #Image vectors - size of pi input
+x = tf.placeholder(tf.float32, shape=[None, 1024]) #Image vectors - size of pi input
 y_ = tf.placeholder(tf.float32, shape=[None, 3]) #One-hot vectors - TODO: change to 4
-
-W = tf.Variable(tf.zeros([10000,3])) #Weights - change to 4
-b = tf.Variable(tf.zeros([3])) #Biases - change to 4
-
-#Add label to graph nodes
-y = tf.nn.softmax(tf.matmul(x,W) + b) #Softmax label for prediction
-
-cross_entropy = -tf.reduce_sum(y_*tf.log(y))
 
 print "Setting up Convolutional layers"
 
@@ -46,9 +40,8 @@ print "Setting up Convolutional layers"
 W_conv1 = weight_variable([5, 5, 1, 32])
 b_conv1 = bias_variable([32])
 
-x_image = tf.reshape(x, [-1,100,100,1])
+x_image = tf.reshape(x, [-1,32,32,1])
 
-#Max pooling and stuff
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 h_pool1 = max_pool_2x2(h_conv1)
 
@@ -59,11 +52,18 @@ b_conv2 = bias_variable([64])
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 h_pool2 = max_pool_2x2(h_conv2)
 
+#Conv 3
+W_conv3 = weight_variable([5, 5, 64, 128])
+b_conv3 = bias_variable([128])
+
+h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+h_pool3 = max_pool_2x2(h_conv3)
+
 #Dense layer
-W_fc1 = weight_variable([25 * 25 * 64, 1024])
+W_fc1 = weight_variable([8 * 8 * 64, 1024])
 b_fc1 = bias_variable([1024])
 
-h_pool2_flat = tf.reshape(h_pool2, [-1, 25 * 25 * 64])
+h_pool2_flat = tf.reshape(h_pool3, [-1, 8 * 8 * 64])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
 #Dropout to prevent overfitting
@@ -83,15 +83,15 @@ sess.run(tf.initialize_all_variables())
 
 saver = tf.train.Saver()
 
-def getch():
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setraw(sys.stdin.fileno())
-        ch = sys.stdin.read(1)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return ch
+# def getch():
+#     fd = sys.stdin.fileno()
+#     old_settings = termios.tcgetattr(fd)
+#     try:
+#         tty.setraw(sys.stdin.fileno())
+#         ch = sys.stdin.read(1)
+#     finally:
+#         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+#     return ch
 
 import socket
 import sys
@@ -122,32 +122,48 @@ else:
 
 def convertModeToVal(mode):
 	if mode == 0:
+		print "Forward march!"
 		return "FWD"
 	if mode == 1:
+		print "Turn left"
 		return "LEFT"
 	if mode == 2:
+		print "Turn right"
 		return "RIGHT"
 
 def convertVectorToLabel(vec):
-	vec = vec.tolist()
-	maxVal = max(vec)
-	return vec.index(maxVal)
+	vec = vec[0].tolist()
+
+	maximum = vec[0]
+	maxIndex = 0
+
+	for i in range(len(vec)):
+		if vec[i] > maximum:
+			maximum = vec[i]
+			maxIndex = i
+
+	return maxIndex
 
 
 def labelVideoInput():
 	print "Searching for stream"
-	last38 = []
+	last5 = []
 	labelIndex = 0
 
-	#Stream model
-	stream=urllib.urlopen('http://192.168.0.1:8080/?action=stream')
+	while True:
+		data = sock.recv(16)
+		print data
+		if "OK" in data:
+			break
+
+	stream = urllib.urlopen('http://192.168.0.1:8080/?action=stream')
 	bytes=''
 
 	print "Connected to stream"
 
 	while(True):
 		#Load from stream
-		bytes+=stream.read(22500)
+		bytes+=stream.read(4096)
 		a = bytes.find('\xff\xd8')
 		b = bytes.find('\xff\xd9')
 
@@ -159,28 +175,32 @@ def labelVideoInput():
 
 			# Our operations on the frame come here
 			gray = cv2.cvtColor(i, cv2.COLOR_BGR2GRAY)
-			imgBeforeFlatten = cv2.resize(gray, (100, 100))
+			imgBeforeFlatten = cv2.resize(gray, (32, 32))
 			img = imgBeforeFlatten.reshape(1, imgBeforeFlatten.shape[0] * imgBeforeFlatten.shape[1])
 
 			#Classify image with NN
 			feed_dict = {x: img, keep_prob: 1.0}
-			classification = sess.run(y, feed_dict)
+			classification = sess.run(y_conv, feed_dict)
+
+			print "Classification", classification
 
 			#print classification
 			label = convertVectorToLabel(classification)
 
+			print "Label", label
+
 			#Populate at first, treat like queue there after
-			if len(last38) <= 37:
-				last38.append(label)
+			if len(last5) <= 5:
+				last5.append(label)
 			else:
-				last38[labelIndex % 38] = label #Fill up last38 in FIFO order
+				last5[labelIndex % 5] = label #Fill up last38 in FIFO order
 
 			labelIndex = labelIndex + 1
 
-			currentMode = max(set(last38), key=last38.count) #Most occurin in last 38 samples
+			currentMode = max(set(last5), key=last5.count) #Most occurin in last 38 samples
 
-			if len(last38) >= 38:
-				print currentMode
+			if len(last5) >= 5:
+				print "CurrentMode", currentMode
 				sock.sendall(convertModeToVal(currentMode))
 
 			# Display the resulting frame
