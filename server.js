@@ -4,6 +4,7 @@ var path = require('path');
 var app = require('express')();
 var server = require('http').Server(app);
 var port = 3000;
+var password = 'T0t4llyS3cretDontStealMyStuffPlz!';
 
 app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, '/src', 'keys.html'));
